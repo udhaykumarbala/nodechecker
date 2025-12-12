@@ -1,0 +1,2072 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>0G AI Alignment Node - Claim Checker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'SF Pro Display', 'Inter', sans-serif;
+            background: #0A0118;
+            color: #FFFFFF;
+            line-height: 1.5;
+            overflow-x: hidden;
+        }
+
+        /* Animated Gradient Background */
+        .gradient-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: linear-gradient(135deg, #0A0118 0%, #1A0A2E 50%, #2D1B4E 100%);
+        }
+
+        .gradient-orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.4;
+            animation: float 20s ease-in-out infinite;
+        }
+
+        .orb-1 {
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, #7C3AED 0%, transparent 70%);
+            top: -250px;
+            left: -250px;
+            animation-delay: 0s;
+        }
+
+        .orb-2 {
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, #A855F7 0%, transparent 70%);
+            top: 50%;
+            right: -200px;
+            animation-delay: 7s;
+        }
+
+        .orb-3 {
+            width: 350px;
+            height: 350px;
+            background: radial-gradient(circle, #EC4899 0%, transparent 70%);
+            bottom: -175px;
+            left: 50%;
+            animation-delay: 14s;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(100px, -100px) scale(1.1); }
+            66% { transform: translate(-100px, 100px) scale(0.9); }
+        }
+
+        /* Header */
+        .header {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 1rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 1.125rem;
+            font-weight: 600;
+            animation: slideInLeft 0.5s ease-out;
+        }
+
+        .logo-icon {
+            width: 2.5rem;
+            height: 2.5rem;
+            background: linear-gradient(135deg, #7C3AED 0%, #A855F7 100%);
+            border-radius: 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            box-shadow: 0 0 20px rgba(124, 58, 237, 0.5);
+        }
+
+        .network-badge {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1.25rem;
+            background: rgba(124, 58, 237, 0.15);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(124, 58, 237, 0.3);
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            animation: slideInRight 0.5s ease-out;
+        }
+
+        /* Container */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Hero Section */
+        .hero {
+            text-align: center;
+            margin-bottom: 3rem;
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        .hero-title {
+            font-size: 3rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #FFFFFF 0%, #A855F7 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.75rem;
+        }
+
+        .hero-subtitle {
+            font-size: 1.25rem;
+            color: rgba(255, 255, 255, 0.6);
+            margin-bottom: 2.5rem;
+        }
+
+        /* Search Card - Glassmorphism */
+        .search-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 1.5rem;
+            padding: 2.5rem;
+            box-shadow: 0 8px 32px 0 rgba(124, 58, 237, 0.2);
+            max-width: 700px;
+            margin: 0 auto;
+            animation: scaleIn 0.6s ease-out;
+        }
+
+        .search-form {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .search-input {
+            flex: 1;
+            padding: 1.25rem 1.5rem;
+            font-size: 1.25rem;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 1rem;
+            color: #FFFFFF;
+            transition: all 0.3s;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #7C3AED;
+            box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.2);
+            background: rgba(255, 255, 255, 0.12);
+        }
+
+        .search-input::placeholder {
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        .search-button {
+            padding: 1.25rem 3rem;
+            font-size: 1.125rem;
+            font-weight: 600;
+            background: linear-gradient(135deg, #7C3AED 0%, #A855F7 100%);
+            color: #FFFFFF;
+            border: none;
+            border-radius: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 20px rgba(124, 58, 237, 0.4);
+        }
+
+        .search-button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(124, 58, 237, 0.6);
+        }
+
+        .search-button:active {
+            transform: translateY(0);
+        }
+
+        .search-button:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        .search-hint {
+            font-size: 0.875rem;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        /* Button Spinner */
+        .button-spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top: 2px solid #FFFFFF;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-right: 0.5rem;
+            vertical-align: middle;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Skeleton Loading */
+        .skeleton-loading {
+            display: none;
+        }
+
+        .skeleton-loading.active {
+            display: block;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .skeleton-hero {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 2rem;
+            padding: 2.5rem;
+            margin-bottom: 2.5rem;
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 2.5rem;
+        }
+
+        .skeleton-image {
+            width: 200px;
+            height: 200px;
+            border-radius: 1.5rem;
+            background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 25%, rgba(255, 255, 255, 0.15) 50%, rgba(255, 255, 255, 0.05) 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+        }
+
+        .skeleton-content {
+            flex: 1;
+        }
+
+        .skeleton-line {
+            height: 20px;
+            background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 25%, rgba(255, 255, 255, 0.15) 50%, rgba(255, 255, 255, 0.05) 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .skeleton-line.large {
+            height: 60px;
+            margin: 1.5rem 0;
+        }
+
+        .skeleton-line.medium {
+            height: 40px;
+        }
+
+        @keyframes shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        /* Skeleton Part 1 Timeline */
+        .skeleton-timeline {
+            margin-top: 2rem;
+        }
+
+        .skeleton-timeline-item {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 1.5rem;
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+            position: relative;
+            padding-left: 4rem;
+        }
+
+        .skeleton-timeline-dot {
+            position: absolute;
+            left: -44px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 25%, rgba(255, 255, 255, 0.15) 50%, rgba(255, 255, 255, 0.05) 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+        }
+
+        .skeleton-mobile-timeline {
+            margin-bottom: 1.5rem;
+        }
+
+        .skeleton-mobile-timeline-scroll {
+            display: flex;
+            gap: 1rem;
+            padding: 1rem 0;
+            overflow: hidden;
+        }
+
+        .skeleton-mobile-timeline-node {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+            min-width: 60px;
+        }
+
+        .skeleton-mobile-dot {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 25%, rgba(255, 255, 255, 0.15) 50%, rgba(255, 255, 255, 0.05) 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+        }
+
+        .skeleton-mobile-detail {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        /* Error State */
+        .error-state {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 1.5rem;
+            padding: 2rem;
+            text-align: center;
+            display: none;
+            max-width: 700px;
+            margin: 0 auto 2rem;
+            animation: shake 0.5s ease-out;
+        }
+
+        .error-state.active {
+            display: block;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        .error-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .error-message {
+            color: #FCA5A5;
+            font-weight: 500;
+            font-size: 1.125rem;
+        }
+
+        /* Results */
+        .results {
+            display: none;
+            overflow-x: hidden;
+        }
+
+        .results.active {
+            display: block;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        /* Tab Content Wrapper */
+        .tab-content-wrapper {
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* NFT Hero Card - Focus on Remaining */
+        .nft-hero {
+            background: linear-gradient(135deg, rgba(124, 58, 237, 0.15) 0%, rgba(168, 85, 247, 0.15) 100%);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(124, 58, 237, 0.3);
+            border-radius: 2rem;
+            padding: 0;
+            margin-bottom: 2.5rem;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(124, 58, 237, 0.3);
+            animation: slideUp 0.6s ease-out;
+        }
+
+        .nft-hero-content {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 2.5rem;
+            padding: 2.5rem;
+        }
+
+        .nft-image-wrapper {
+            position: relative;
+        }
+
+        .nft-image {
+            width: 200px;
+            height: 200px;
+            border-radius: 1.5rem;
+            object-fit: cover;
+            border: 2px solid rgba(124, 58, 237, 0.5);
+            box-shadow: 0 10px 40px rgba(124, 58, 237, 0.4);
+        }
+
+        .nft-placeholder {
+            width: 200px;
+            height: 200px;
+            border-radius: 1.5rem;
+            background: linear-gradient(135deg, rgba(124, 58, 237, 0.2) 0%, rgba(168, 85, 247, 0.2) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 4rem;
+            border: 2px solid rgba(124, 58, 237, 0.3);
+        }
+
+        .nft-details {
+            flex: 1;
+        }
+
+        .nft-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .nft-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .opensea-link {
+            font-size: 0.875rem;
+            color: #7C3AED;
+            text-decoration: none;
+            font-weight: 500;
+            padding: 0.5rem 1rem;
+            background: rgba(124, 58, 237, 0.15);
+            border-radius: 0.5rem;
+            transition: all 0.3s;
+        }
+
+        .opensea-link:hover {
+            background: rgba(124, 58, 237, 0.3);
+            transform: translateX(5px);
+        }
+
+        .allocation-section {
+            margin-top: 2rem;
+            text-align: center;
+        }
+
+        .allocation-label {
+            font-size: 0.875rem;
+            color: rgba(255, 255, 255, 0.6);
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .allocation-ratio {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1.5rem;
+            font-size: 3rem;
+            font-weight: 800;
+            line-height: 1;
+        }
+
+        .ratio-remaining {
+            background: linear-gradient(135deg, #7C3AED 0%, #EC4899 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .ratio-separator {
+            color: rgba(255, 255, 255, 0.4);
+            font-weight: 300;
+        }
+
+        .ratio-allocated {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        @keyframes glow {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+
+        /* Mobile-Specific Components (Hidden on Desktop) */
+        .mobile-only {
+            display: none !important;
+        }
+
+        .desktop-only {
+            display: block;
+        }
+
+        /* Mobile Compact Hero */
+        .mobile-hero-compact {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 1.5rem;
+            padding: 1.25rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .mobile-hero-top {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .mobile-nft-thumb {
+            width: 64px;
+            height: 64px;
+            border-radius: 0.75rem;
+            object-fit: cover;
+            border: 2px solid rgba(124, 58, 237, 0.5);
+            flex-shrink: 0;
+        }
+
+        .mobile-nft-placeholder-thumb {
+            width: 64px;
+            height: 64px;
+            border-radius: 0.75rem;
+            background: linear-gradient(135deg, rgba(124, 58, 237, 0.2) 0%, rgba(168, 85, 247, 0.2) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            border: 2px solid rgba(124, 58, 237, 0.3);
+            flex-shrink: 0;
+        }
+
+        .mobile-hero-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .mobile-nft-title {
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .mobile-stats-row {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
+        }
+
+        .mobile-stat {
+            text-align: center;
+        }
+
+        .mobile-stat-label {
+            font-size: 0.625rem;
+            color: rgba(255, 255, 255, 0.5);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.25rem;
+        }
+
+        .mobile-stat-value {
+            font-size: 1.125rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #7C3AED 0%, #EC4899 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .mobile-stat-value.secondary {
+            background: none;
+            -webkit-text-fill-color: rgba(255, 255, 255, 0.8);
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .mobile-progress-bar {
+            width: 100%;
+            height: 6px;
+            background: rgba(124, 58, 237, 0.2);
+            border-radius: 9999px;
+            overflow: hidden;
+            margin-top: 0.75rem;
+        }
+
+        .mobile-progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #7C3AED 0%, #EC4899 100%);
+            border-radius: 9999px;
+            transition: width 0.8s ease-out;
+        }
+
+        .mobile-hero-actions {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .mobile-action-btn {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            border-radius: 0.75rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .mobile-action-btn.primary {
+            background: linear-gradient(135deg, #7C3AED 0%, #A855F7 100%);
+            color: #FFFFFF;
+        }
+
+        .mobile-action-btn.secondary {
+            background: rgba(255, 255, 255, 0.08);
+            color: rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        /* Sticky Footer CTA (Mobile Only) */
+        .mobile-sticky-footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(10, 1, 24, 0.95);
+            backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(124, 58, 237, 0.3);
+            padding: 1rem 1.5rem;
+            padding-bottom: calc(1rem + env(safe-area-inset-bottom));
+            z-index: 1000;
+            box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .mobile-footer-info {
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.6);
+            margin-bottom: 0.5rem;
+            text-align: center;
+        }
+
+        .mobile-footer-cta {
+            width: 100%;
+            padding: 1rem;
+            background: linear-gradient(135deg, #7C3AED 0%, #A855F7 100%);
+            color: #FFFFFF;
+            border: none;
+            border-radius: 0.875rem;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 20px rgba(124, 58, 237, 0.4);
+        }
+
+        .mobile-footer-cta:active {
+            transform: scale(0.98);
+        }
+
+        .mobile-footer-penalty {
+            font-size: 0.6875rem;
+            color: rgba(255, 255, 255, 0.5);
+            margin-top: 0.5rem;
+            text-align: center;
+        }
+
+        /* Mobile Horizontal Timeline */
+        .mobile-timeline-wrapper {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 1.5rem;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .mobile-timeline-title {
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+        }
+
+        .mobile-timeline-scroll {
+            position: relative;
+            overflow-x: auto;
+            overflow-y: hidden;
+            padding: 1rem 0;
+            margin-bottom: 1.5rem;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+        }
+
+        .mobile-timeline-scroll::-webkit-scrollbar {
+            display: none;
+        }
+
+        .mobile-timeline-track {
+            display: flex;
+            align-items: center;
+            gap: 3rem;
+            min-width: min-content;
+            padding: 0 1rem;
+        }
+
+        .mobile-timeline-node {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .mobile-timeline-node-dot {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, 0.1);
+            margin-bottom: 0.5rem;
+            transition: all 0.3s;
+            z-index: 1;
+        }
+
+        .mobile-timeline-node.past .mobile-timeline-node-dot {
+            background: #10B981;
+            border-color: #10B981;
+            box-shadow: 0 0 15px rgba(16, 185, 129, 0.5);
+        }
+
+        .mobile-timeline-node.current .mobile-timeline-node-dot {
+            background: #7C3AED;
+            border-color: #7C3AED;
+            box-shadow: 0 0 20px rgba(124, 58, 237, 0.8);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .mobile-timeline-node.best .mobile-timeline-node-dot {
+            background: linear-gradient(135deg, #10B981 0%, #34D399 100%);
+            border-color: #10B981;
+            box-shadow: 0 0 25px rgba(16, 185, 129, 0.8);
+        }
+
+        .mobile-timeline-node-date {
+            font-size: 0.6875rem;
+            color: rgba(255, 255, 255, 0.6);
+            white-space: nowrap;
+        }
+
+        .mobile-timeline-connector {
+            position: absolute;
+            top: 16px;
+            left: 50%;
+            width: calc(100% + 3rem);
+            height: 3px;
+            background: rgba(255, 255, 255, 0.2);
+            z-index: 0;
+        }
+
+        .mobile-milestone-detail {
+            background: rgba(124, 58, 237, 0.08);
+            border: 1px solid rgba(124, 58, 237, 0.2);
+            border-radius: 1.25rem;
+            padding: 1.25rem;
+        }
+
+        .mobile-milestone-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .mobile-milestone-date {
+            font-size: 1.125rem;
+            font-weight: 700;
+        }
+
+        .mobile-milestone-badge {
+            padding: 0.375rem 0.875rem;
+            border-radius: 9999px;
+            font-size: 0.6875rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .mobile-milestone-badge.current {
+            background: rgba(124, 58, 237, 0.3);
+            color: #A855F7;
+            border: 1px solid rgba(124, 58, 237, 0.5);
+        }
+
+        .mobile-milestone-badge.best {
+            background: rgba(16, 185, 129, 0.2);
+            color: #10B981;
+            border: 1px solid rgba(16, 185, 129, 0.4);
+        }
+
+        .mobile-milestone-badge.upcoming {
+            background: rgba(245, 158, 11, 0.2);
+            color: #F59E0B;
+            border: 1px solid rgba(245, 158, 11, 0.4);
+        }
+
+        .mobile-milestone-stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .mobile-milestone-stat {
+            text-align: center;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 0.875rem;
+        }
+
+        .mobile-milestone-stat-label {
+            font-size: 0.6875rem;
+            color: rgba(255, 255, 255, 0.5);
+            text-transform: uppercase;
+            margin-bottom: 0.375rem;
+        }
+
+        .mobile-milestone-stat-value {
+            font-size: 1.375rem;
+            font-weight: 700;
+        }
+
+        .mobile-milestone-warning {
+            padding: 1rem;
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 0.75rem;
+            font-size: 0.8125rem;
+            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 1rem;
+        }
+
+        /* Penalty Color Coding */
+        .penalty-high { color: #EF4444; }
+        .penalty-medium { color: #F59E0B; }
+        .penalty-low { color: #EAB308; }
+        .penalty-verylow { color: #84CC16; }
+        .penalty-zero { color: #22C55E; }
+
+        /* Mobile Part 1 Condensed Stats */
+        .mobile-part1-summary {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 1.5rem;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .mobile-part1-title {
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: 1.25rem;
+            text-align: center;
+        }
+
+        .mobile-part1-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.75rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .mobile-part1-stat {
+            text-align: center;
+            padding: 1rem 0.5rem;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 0.875rem;
+        }
+
+        .mobile-part1-stat-label {
+            font-size: 0.6875rem;
+            color: rgba(255, 255, 255, 0.5);
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+            letter-spacing: 0.05em;
+        }
+
+        .mobile-part1-stat-value {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 0.25rem;
+        }
+
+        .mobile-part1-stat-value.highlight {
+            background: linear-gradient(135deg, #7C3AED 0%, #EC4899 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .mobile-part1-stat-unit {
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        .mobile-part1-footer {
+            text-align: center;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .mobile-part1-footer-label {
+            font-size: 0.6875rem;
+            color: rgba(255, 255, 255, 0.5);
+            text-transform: uppercase;
+            margin-bottom: 0.375rem;
+        }
+
+        .mobile-part1-footer-value {
+            font-size: 1.125rem;
+            font-weight: 700;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: inline-flex;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 1rem;
+            padding: 0.5rem;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+            position: relative;
+        }
+
+        .tab-indicator {
+            position: absolute;
+            top: 0.5rem;
+            left: 0.5rem;
+            height: calc(100% - 1rem);
+            background: linear-gradient(135deg, #7C3AED 0%, #A855F7 100%);
+            border-radius: 0.75rem;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 20px rgba(124, 58, 237, 0.4);
+            z-index: 0;
+        }
+
+        .tab {
+            padding: 0.875rem 2rem;
+            border-radius: 0.75rem;
+            font-weight: 600;
+            font-size: 0.875rem;
+            color: rgba(255, 255, 255, 0.6);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+            background: transparent;
+            position: relative;
+            z-index: 1;
+        }
+
+        .tab:hover {
+            color: #FFFFFF;
+        }
+
+        .tab.active {
+            color: #FFFFFF;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        /* Card */
+        .card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 1.5rem;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        .card-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 2rem;
+        }
+
+        /* Info Grid */
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1.25rem;
+            margin-bottom: 2rem;
+        }
+
+        .info-item {
+            padding: 1.25rem;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 1rem;
+            transition: all 0.3s;
+        }
+
+        .info-item:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(124, 58, 237, 0.5);
+        }
+
+        .info-label {
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.6);
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+        }
+
+        .info-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        /* Vertical Timeline with Milestones */
+        .timeline {
+            margin: 2.5rem 0;
+            padding: 2.5rem;
+            background: rgba(124, 58, 237, 0.08);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(124, 58, 237, 0.2);
+            border-radius: 1.5rem;
+        }
+
+        .timeline-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 2.5rem;
+        }
+
+        .vertical-timeline {
+            position: relative;
+            padding-left: 60px;
+        }
+
+        .vertical-timeline-line {
+            position: absolute;
+            left: 26px;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: rgba(124, 58, 237, 0.2);
+            border-radius: 9999px;
+        }
+
+        .vertical-timeline-progress {
+            position: absolute;
+            left: 26px;
+            top: 0;
+            width: 4px;
+            background: linear-gradient(180deg, #10B981 0%, #7C3AED 100%);
+            border-radius: 9999px;
+            transition: height 0.8s ease-out;
+            box-shadow: 0 0 20px rgba(124, 58, 237, 0.6);
+        }
+
+        .timeline-item {
+            position: relative;
+            margin-bottom: 2rem;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            transition: all 0.3s;
+        }
+
+        .timeline-item:hover {
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateX(10px);
+            border-color: rgba(124, 58, 237, 0.5);
+        }
+
+        .timeline-item:hover .timeline-dot {
+            transform: translateX(-10px) translateY(-50%) scale(1.15);
+        }
+
+        .timeline-item.completed {
+            background: rgba(16, 185, 129, 0.08);
+            border-color: rgba(16, 185, 129, 0.3);
+        }
+
+        .timeline-item.current {
+            background: rgba(124, 58, 237, 0.15);
+            border-color: rgba(124, 58, 237, 0.5);
+            box-shadow: 0 0 30px rgba(124, 58, 237, 0.4);
+        }
+
+        .timeline-item.best {
+            background: rgba(16, 185, 129, 0.12);
+            border: 2px solid rgba(16, 185, 129, 0.4);
+        }
+
+        .timeline-dot {
+            position: absolute;
+            left: -44px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            border: 3px solid rgba(255, 255, 255, 0.5);
+            transition: all 0.3s;
+            z-index: 1;
+        }
+
+        .timeline-item.completed .timeline-dot {
+            background: #10B981;
+            border-color: #10B981;
+            box-shadow: 0 0 15px rgba(16, 185, 129, 0.6);
+        }
+
+        .timeline-item.current .timeline-dot {
+            background: #7C3AED;
+            border-color: #7C3AED;
+            box-shadow: 0 0 20px rgba(124, 58, 237, 0.8), 0 0 40px rgba(124, 58, 237, 0.4);
+        }
+
+        .timeline-item.best .timeline-dot {
+            background: #10B981;
+            border-color: #10B981;
+            box-shadow: 0 0 25px rgba(16, 185, 129, 0.8);
+            width: 28px;
+            height: 28px;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: translateY(-50%) scale(1); }
+            50% { transform: translateY(-50%) scale(1.25); }
+        }
+
+        .timeline-item.current:hover .timeline-dot {
+            animation: none;
+            transform: translateX(-10px) translateY(-50%) scale(1.3);
+        }
+
+        .timeline-content {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+            justify-content: space-between;
+        }
+
+        .timeline-date {
+            font-size: 1rem;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .timeline-date-label {
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.5);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.25rem;
+        }
+
+        .timeline-penalty {
+            text-align: center;
+            padding: 0.625rem 1.25rem;
+            background: rgba(245, 158, 11, 0.15);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            border-radius: 0.5rem;
+            min-width: 90px;
+        }
+
+        .timeline-penalty-label {
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.5);
+            text-transform: uppercase;
+            margin-bottom: 0.25rem;
+        }
+
+        .timeline-penalty-value {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #F59E0B;
+        }
+
+        .timeline-amount {
+            text-align: right;
+            min-width: 160px;
+        }
+
+        .timeline-amount-label {
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.5);
+            text-transform: uppercase;
+            margin-bottom: 0.25rem;
+        }
+
+        .timeline-amount-value {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #10B981;
+        }
+
+        .timeline-item.current .timeline-amount-value {
+            color: #A855F7;
+        }
+
+        .timeline-badge {
+            min-width: 110px;
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        /* Milestone Table */
+        .milestone-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0 0.75rem;
+        }
+
+        .milestone-table thead tr {
+            background: rgba(124, 58, 237, 0.15);
+        }
+
+        .milestone-table th,
+        .milestone-table td {
+            padding: 1.25rem;
+            text-align: left;
+        }
+
+        .milestone-table th {
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .milestone-table tbody tr {
+            background: rgba(255, 255, 255, 0.03);
+            transition: all 0.3s;
+        }
+
+        .milestone-table tbody tr:hover {
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateX(5px);
+        }
+
+        .milestone-table tbody tr td:first-child {
+            border-top-left-radius: 0.75rem;
+            border-bottom-left-radius: 0.75rem;
+        }
+
+        .milestone-table tbody tr td:last-child {
+            border-top-right-radius: 0.75rem;
+            border-bottom-right-radius: 0.75rem;
+        }
+
+        .milestone-table tr.current-row {
+            background: rgba(124, 58, 237, 0.2);
+            border: 1px solid rgba(124, 58, 237, 0.5);
+        }
+
+        .milestone-table tr.best-row {
+            background: rgba(16, 185, 129, 0.15);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.375rem 1rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .badge-current {
+            background: rgba(124, 58, 237, 0.3);
+            color: #A855F7;
+            border: 1px solid rgba(124, 58, 237, 0.5);
+        }
+
+        .badge-best {
+            background: rgba(16, 185, 129, 0.2);
+            color: #10B981;
+            border: 1px solid rgba(16, 185, 129, 0.4);
+        }
+
+        .badge-future {
+            background: rgba(245, 158, 11, 0.2);
+            color: #F59E0B;
+            border: 1px solid rgba(245, 158, 11, 0.4);
+        }
+
+        /* Note */
+        .note {
+            background: rgba(59, 130, 246, 0.1);
+            border-left: 4px solid #3B82F6;
+            padding: 1.25rem;
+            margin-top: 1.5rem;
+            border-radius: 0.75rem;
+            font-size: 0.875rem;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideInLeft {
+            from { opacity: 0; transform: translateX(-30px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(30px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes scaleIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Tablet (769px - 1024px) - Keep Desktop Design */
+        @media (max-width: 1024px) and (min-width: 769px) {
+            .container {
+                padding: 2rem;
+            }
+        }
+
+        /* Tablet (641px-768px) - Desktop design with responsive adjustments */
+        @media (max-width: 768px) and (min-width: 641px) {
+            .container {
+                padding: 1.5rem;
+            }
+        }
+
+        /* Tablet & Mobile (≤768px) - General responsive adjustments for desktop components */
+        @media (max-width: 768px) {
+
+            /* Hero Section */
+            .hero-title {
+                font-size: 2.25rem;
+                line-height: 1.2;
+            }
+
+            .hero-subtitle {
+                font-size: 1rem;
+                margin-bottom: 2rem;
+            }
+
+            /* Search */
+            .search-card {
+                padding: 2rem;
+            }
+
+            .search-form {
+                flex-direction: column;
+            }
+
+            .search-input {
+                font-size: 1.125rem;
+                padding: 1.125rem 1.25rem;
+            }
+
+            .search-button {
+                padding: 1.125rem 2.5rem;
+                min-height: 50px;
+            }
+
+            /* NFT Hero Card */
+            .nft-hero-content {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+                padding: 2rem;
+            }
+
+            .nft-image, .nft-placeholder {
+                width: 140px;
+                height: 140px;
+                margin: 0 auto;
+            }
+
+            .nft-header {
+                flex-direction: column;
+                gap: 1rem;
+                text-align: center;
+                margin-bottom: 1.5rem;
+            }
+
+            .nft-title {
+                font-size: 1.25rem;
+            }
+
+            .opensea-link {
+                padding: 0.625rem 1.25rem;
+            }
+
+            /* Allocation */
+            .allocation-section {
+                margin-top: 1.5rem;
+            }
+
+            .allocation-label {
+                font-size: 0.75rem;
+            }
+
+            .allocation-ratio {
+                flex-direction: column;
+                gap: 0.75rem;
+                font-size: 2.25rem;
+            }
+
+            .ratio-separator {
+                display: none;
+            }
+
+            /* Tabs */
+            .tabs {
+                width: 100%;
+                padding: 0.375rem;
+                gap: 0.375rem;
+            }
+
+            .tab {
+                padding: 0.875rem 1.5rem;
+                font-size: 0.8125rem;
+            }
+
+            /* Cards */
+            .card {
+                padding: 1.5rem;
+                margin-bottom: 1.5rem;
+            }
+
+            .card-title {
+                font-size: 1.25rem;
+                margin-bottom: 1.5rem;
+            }
+
+            /* Info Grid */
+            .info-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 1rem;
+            }
+
+            .info-item {
+                padding: 1rem;
+            }
+
+            .info-label {
+                font-size: 0.6875rem;
+                margin-bottom: 0.375rem;
+            }
+
+            .info-value {
+                font-size: 1.125rem;
+            }
+
+            /* Vertical Timeline Mobile */
+            .timeline {
+                padding: 1.5rem;
+            }
+
+            .timeline-title {
+                font-size: 1.125rem;
+                margin-bottom: 2rem;
+            }
+
+            .vertical-timeline {
+                padding-left: 40px;
+            }
+
+            .vertical-timeline-line,
+            .vertical-timeline-progress {
+                left: 18px;
+            }
+
+            .timeline-dot {
+                left: -34px;
+                width: 20px;
+                height: 20px;
+            }
+
+            .timeline-item.best .timeline-dot {
+                width: 24px;
+                height: 24px;
+            }
+
+            .timeline-item:hover .timeline-dot {
+                transform: translateX(-8px) translateY(-50%) scale(1.15);
+            }
+
+            .timeline-item.current:hover .timeline-dot {
+                animation: none;
+                transform: translateX(-8px) translateY(-50%) scale(1.3);
+            }
+
+            .timeline-item:hover {
+                transform: translateX(8px);
+            }
+
+            .timeline-item {
+                padding: 1.25rem;
+                margin-bottom: 1.5rem;
+            }
+
+            .timeline-content {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+
+            .timeline-content > div {
+                width: 100%;
+            }
+
+            .timeline-date-label {
+                font-size: 0.6875rem;
+            }
+
+            .timeline-date {
+                font-size: 0.9375rem;
+            }
+
+            .timeline-penalty {
+                width: fit-content;
+                padding: 0.5rem 1rem;
+                min-width: 80px;
+            }
+
+            .timeline-penalty-label {
+                font-size: 0.6875rem;
+            }
+
+            .timeline-penalty-value {
+                font-size: 1.125rem;
+            }
+
+            .timeline-amount {
+                text-align: left;
+                min-width: auto;
+            }
+
+            .timeline-amount-label {
+                font-size: 0.6875rem;
+            }
+
+            .timeline-amount-value {
+                font-size: 1.125rem;
+            }
+
+            .timeline-badge {
+                justify-content: flex-start;
+            }
+
+            .badge {
+                padding: 0.375rem 0.875rem;
+                font-size: 0.6875rem;
+            }
+
+            /* Note */
+            .note {
+                padding: 1rem;
+                font-size: 0.8125rem;
+            }
+
+            /* Skeleton */
+            .skeleton-hero {
+                grid-template-columns: 1fr;
+                text-align: center;
+                padding: 2rem;
+            }
+
+            .skeleton-image {
+                width: 140px;
+                height: 140px;
+                margin: 0 auto;
+            }
+
+            .skeleton-timeline-item {
+                padding: 1.5rem;
+                padding-left: 3rem;
+            }
+
+            .skeleton-timeline-dot {
+                left: -34px;
+                width: 20px;
+                height: 20px;
+            }
+        }
+
+        /* Mobile Only (≤640px) - Show Mobile-Specific Components */
+        @media (max-width: 640px) {
+            /* Show/Hide Desktop vs Mobile */
+            .mobile-only {
+                display: block !important;
+            }
+
+            .desktop-only {
+                display: none !important;
+            }
+
+            /* Mobile Hero Compact Layout */
+            .mobile-hero-compact {
+                display: flex !important;
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            /* Mobile Timeline Wrapper */
+            .mobile-timeline-wrapper {
+                display: block !important;
+            }
+
+            .container {
+                padding: 1.5rem;
+            }
+        }
+
+        /* Small Mobile (≤480px) */
+        @media (max-width: 480px) {
+            .container {
+                padding: 1rem;
+            }
+
+            /* Hero */
+            .hero-title {
+                font-size: 1.875rem;
+            }
+
+            .hero-subtitle {
+                font-size: 0.9375rem;
+            }
+
+            /* Search */
+            .search-card {
+                padding: 1.5rem;
+            }
+
+            .search-input {
+                font-size: 1rem;
+                padding: 1rem 1.125rem;
+            }
+
+            .search-button {
+                padding: 1rem 2rem;
+                font-size: 1rem;
+            }
+
+            /* Mobile Hero Compact */
+            .mobile-hero-compact {
+                padding: 1rem;
+            }
+
+            .mobile-nft-thumb,
+            .mobile-nft-placeholder-thumb {
+                width: 56px;
+                height: 56px;
+            }
+
+            .mobile-nft-title {
+                font-size: 0.9375rem;
+            }
+
+            .mobile-stat-value {
+                font-size: 1rem;
+            }
+
+            /* NFT Card */
+            .nft-hero {
+                border-radius: 1.5rem;
+            }
+
+            .nft-hero-content {
+                padding: 1.5rem;
+                gap: 1.5rem;
+            }
+
+            .nft-image, .nft-placeholder {
+                width: 120px;
+                height: 120px;
+            }
+
+            .nft-title {
+                font-size: 1.125rem;
+            }
+
+            .allocation-ratio {
+                font-size: 2rem;
+            }
+
+            /* Mobile Part 1 Stats - Stack on very small screens */
+            .mobile-part1-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .mobile-part1-stat-value {
+                font-size: 1.5rem;
+            }
+
+            /* Mobile Timeline */
+            .mobile-timeline-wrapper {
+                padding: 1.25rem;
+            }
+
+            .mobile-milestone-stat-value {
+                font-size: 1.25rem;
+            }
+
+            /* Tabs */
+            .tab {
+                padding: 0.75rem 1rem;
+                font-size: 0.75rem;
+            }
+
+            /* Cards */
+            .card {
+                padding: 1.25rem;
+                border-radius: 1.25rem;
+            }
+
+            .card-title {
+                font-size: 1.125rem;
+            }
+
+            /* Info Grid - Stack on very small screens */
+            .info-grid {
+                grid-template-columns: 1fr;
+                gap: 0.875rem;
+            }
+
+            .info-item {
+                padding: 0.875rem;
+            }
+
+            .info-value {
+                font-size: 1rem;
+            }
+
+            /* Timeline */
+            .timeline {
+                padding: 1.25rem;
+                border-radius: 1.25rem;
+            }
+
+            .timeline-title {
+                font-size: 1rem;
+                margin-bottom: 1.5rem;
+            }
+
+            .vertical-timeline {
+                padding-left: 35px;
+            }
+
+            .timeline-item {
+                padding: 1rem;
+                margin-bottom: 1.25rem;
+                border-radius: 0.875rem;
+            }
+
+            .timeline-content {
+                gap: 0.875rem;
+            }
+
+            .timeline-date {
+                font-size: 0.875rem;
+            }
+
+            .timeline-penalty {
+                padding: 0.5rem 0.875rem;
+                min-width: 70px;
+            }
+
+            .timeline-penalty-value,
+            .timeline-amount-value {
+                font-size: 1rem;
+            }
+
+            .badge {
+                padding: 0.3125rem 0.75rem;
+                font-size: 0.625rem;
+            }
+
+            /* Note */
+            .note {
+                padding: 0.875rem;
+                font-size: 0.75rem;
+                border-radius: 0.625rem;
+            }
+
+            /* Skeleton */
+            .skeleton-hero {
+                padding: 1.5rem;
+            }
+
+            .skeleton-image {
+                width: 120px;
+                height: 120px;
+            }
+
+            .skeleton-timeline-item {
+                padding: 1.25rem;
+                padding-left: 2.5rem;
+            }
+
+            .skeleton-timeline-dot {
+                left: -28px;
+                width: 18px;
+                height: 18px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Animated Background -->
+    <div class="gradient-bg">
+        <div class="gradient-orb orb-1"></div>
+        <div class="gradient-orb orb-2"></div>
+        <div class="gradient-orb orb-3"></div>
+    </div>
+
+    <!-- Header -->
+    <div class="header">
+        <div class="header-content">
+            <div class="logo">
+                <div class="logo-icon">0G</div>
+                <span>AI Alignment Node Checker</span>
+            </div>
+            <div class="network-badge">
+                ⚡ Arbitrum • 0G Chain
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Hero Section -->
+        <div class="hero" id="heroSection">
+            <h1 class="hero-title">NFT Claim Checker</h1>
+            <p class="hero-subtitle">Check AI Alignment Node NFT allocation and claim status</p>
+
+            <!-- Search Card -->
+            <div class="search-card">
+                <form class="search-form" id="searchForm">
+                    <input
+                        type="text"
+                        id="nftIdInput"
+                        class="search-input"
+                        placeholder="Enter NFT ID"
+                        required
+                        pattern="[0-9]+"
+                    >
+                    <button type="submit" class="search-button" id="searchButton">
+                        Check Status
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Skeleton Loading State -->
+        <div class="skeleton-loading" id="skeletonLoading">
+            <!-- Hero Skeleton -->
+            <div class="skeleton-hero">
+                <div class="skeleton-image"></div>
+                <div class="skeleton-content">
+                    <div class="skeleton-line" style="width: 40%;"></div>
+                    <div class="skeleton-line" style="width: 60%;"></div>
+                    <div class="skeleton-line" style="width: 30%; margin: 2rem auto 0.5rem;"></div>
+                    <div class="skeleton-line large" style="width: 80%; margin: 0 auto;"></div>
+                </div>
+            </div>
+
+            <!-- Part 1 Skeleton Timeline -->
+            <!-- Mobile Timeline Skeleton -->
+            <div class="skeleton-mobile-timeline mobile-only">
+                <div class="skeleton-mobile-timeline-scroll">
+                    <div class="skeleton-mobile-timeline-node">
+                        <div class="skeleton-mobile-dot"></div>
+                        <div class="skeleton-line" style="width: 50px; height: 12px;"></div>
+                    </div>
+                    <div class="skeleton-mobile-timeline-node">
+                        <div class="skeleton-mobile-dot"></div>
+                        <div class="skeleton-line" style="width: 50px; height: 12px;"></div>
+                    </div>
+                    <div class="skeleton-mobile-timeline-node">
+                        <div class="skeleton-mobile-dot"></div>
+                        <div class="skeleton-line" style="width: 50px; height: 12px;"></div>
+                    </div>
+                    <div class="skeleton-mobile-timeline-node">
+                        <div class="skeleton-mobile-dot"></div>
+                        <div class="skeleton-line" style="width: 50px; height: 12px;"></div>
+                    </div>
+                </div>
+                <div class="skeleton-mobile-detail">
+                    <div class="skeleton-line" style="width: 60%;"></div>
+                    <div class="skeleton-line large" style="width: 90%;"></div>
+                    <div class="skeleton-line" style="width: 40%;"></div>
+                </div>
+            </div>
+
+            <!-- Desktop Timeline Skeleton -->
+            <div class="skeleton-timeline desktop-only">
+                <div class="skeleton-timeline-item">
+                    <div class="skeleton-timeline-dot"></div>
+                    <div class="skeleton-line" style="width: 50%;"></div>
+                    <div class="skeleton-line medium" style="width: 80%;"></div>
+                    <div class="skeleton-line" style="width: 60%;"></div>
+                </div>
+                <div class="skeleton-timeline-item">
+                    <div class="skeleton-timeline-dot"></div>
+                    <div class="skeleton-line" style="width: 45%;"></div>
+                    <div class="skeleton-line medium" style="width: 75%;"></div>
+                    <div class="skeleton-line" style="width: 55%;"></div>
+                </div>
+                <div class="skeleton-timeline-item">
+                    <div class="skeleton-timeline-dot"></div>
+                    <div class="skeleton-line" style="width: 55%;"></div>
+                    <div class="skeleton-line medium" style="width: 85%;"></div>
+                    <div class="skeleton-line" style="width: 65%;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Error State -->
+        <div class="error-state" id="errorState">
+            <div class="error-icon">⚠️</div>
+            <p class="error-message" id="errorMessage"></p>
+        </div>
+
+        <!-- Results -->
+        <div class="results" id="results">
+            <!-- Desktop NFT Hero Card -->
+            <div id="nftHeroCard" class="desktop-only"></div>
+
+            <!-- Mobile Compact Hero Card -->
+            <div id="mobileHeroCard" class="mobile-only mobile-hero-compact"></div>
+
+            <!-- Tabs -->
+            <div class="tabs" id="tabs">
+                <div class="tab-indicator" id="tabIndicator"></div>
+                <button class="tab active" onclick="switchTab('part1')" data-tab="part1">Part 1: Milestone Claims</button>
+                <button class="tab" onclick="switchTab('part2')" data-tab="part2">Part 2: Linear Vesting</button>
+            </div>
+
+            <!-- Tab Content Wrapper -->
+            <div class="tab-content-wrapper">
+                <!-- Part 1 Content -->
+                <div class="tab-content active" id="part1Content">
+                <!-- Mobile Horizontal Timeline -->
+                <div id="mobileTimelineSection" class="mobile-only mobile-timeline-wrapper"></div>
+
+                <!-- Desktop Combined Vertical Timeline with Milestones -->
+                <div id="timelineSection" class="desktop-only"></div>
+            </div>
+
+                <!-- Part 2 Content -->
+                <div class="tab-content" id="part2Content">
+                    <div class="card">
+                        <h3 class="card-title">🚀 Part 2: Linear Vesting (67% of Total)</h3>
+                        <div class="info-grid" id="part2Grid"></div>
+                        <div class="note">
+                            <strong>📝 Note:</strong> Part 2 rewards vest linearly over 36 months and require active node operation.
+                            "Remaining to Earn" shows what's left to be earned from the total Part 2 allocation.
+                            The progress bar tracks actual rewards earned so far based on node uptime and performance.
+                            Node status and reward data is updated periodically from the 0G Network.
+                        </div>
+                    </div>
+                </div>
+            </div> <!-- End tab-content-wrapper -->
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+    <script src="claim-checker.js"></script>
+</body>
+</html>
