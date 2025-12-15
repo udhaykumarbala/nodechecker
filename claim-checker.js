@@ -257,49 +257,95 @@ function showResults() {
 
 // Initialize tab indicator position
 function initTabIndicator() {
+    // Initialize desktop tab indicator
     const activeTab = document.querySelector('.tab.active');
     const indicator = document.getElementById('tabIndicator');
     const tabsContainer = document.getElementById('tabs');
 
-    if (!activeTab || !indicator || !tabsContainer) return;
+    if (activeTab && indicator && tabsContainer) {
+        const tabRect = activeTab.getBoundingClientRect();
+        const containerRect = tabsContainer.getBoundingClientRect();
 
-    const tabRect = activeTab.getBoundingClientRect();
-    const containerRect = tabsContainer.getBoundingClientRect();
+        const left = tabRect.left - containerRect.left;
+        const width = tabRect.width;
 
-    const left = tabRect.left - containerRect.left;
-    const width = tabRect.width;
+        // Set initial position without transition
+        indicator.style.transition = 'none';
+        indicator.style.width = width + 'px';
+        indicator.style.transform = `translateX(${left}px)`;
 
-    // Set initial position without transition
-    indicator.style.transition = 'none';
-    indicator.style.width = width + 'px';
-    indicator.style.transform = `translateX(${left}px)`;
+        // Re-enable transition after a frame
+        setTimeout(() => {
+            indicator.style.transition = 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
+        }, 50);
+    }
 
-    // Re-enable transition after a frame
-    setTimeout(() => {
-        indicator.style.transition = 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
-    }, 50);
+    // Initialize mobile tab indicator
+    const activeMobileTab = document.querySelector('.mobile-tab-btn.active');
+    const mobileIndicator = document.getElementById('mobileTabIndicator');
+    const mobileTabsContainer = document.getElementById('mobileTabs');
+
+    if (activeMobileTab && mobileIndicator && mobileTabsContainer) {
+        const tabRect = activeMobileTab.getBoundingClientRect();
+        const containerRect = mobileTabsContainer.getBoundingClientRect();
+
+        const left = tabRect.left - containerRect.left;
+        const width = tabRect.width;
+
+        // Set initial position without transition
+        mobileIndicator.style.transition = 'none';
+        mobileIndicator.style.width = width + 'px';
+        mobileIndicator.style.transform = `translateX(${left}px)`;
+
+        // Re-enable transition after a frame
+        setTimeout(() => {
+            mobileIndicator.style.transition = 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
+        }, 50);
+    }
 }
 
 // Tab switching with animated indicator
 function switchTab(tabName) {
     const clickedTab = event.target;
-    const allTabs = document.querySelectorAll('.tab');
-    const indicator = document.getElementById('tabIndicator');
 
-    // Update active tab
-    allTabs.forEach(tab => tab.classList.remove('active'));
+    // Update desktop tabs
+    const allDesktopTabs = document.querySelectorAll('.tab');
+    allDesktopTabs.forEach(tab => tab.classList.remove('active'));
+
+    // Update mobile tabs
+    const allMobileTabs = document.querySelectorAll('.mobile-tab-btn');
+    allMobileTabs.forEach(tab => tab.classList.remove('active'));
+
+    // Set clicked tab as active
     clickedTab.classList.add('active');
 
-    // Animate indicator to active tab position
-    const tabRect = clickedTab.getBoundingClientRect();
-    const tabsContainer = document.getElementById('tabs');
-    const containerRect = tabsContainer.getBoundingClientRect();
+    // Animate indicator for desktop tabs
+    if (clickedTab.classList.contains('tab')) {
+        const indicator = document.getElementById('tabIndicator');
+        const tabRect = clickedTab.getBoundingClientRect();
+        const tabsContainer = document.getElementById('tabs');
+        const containerRect = tabsContainer.getBoundingClientRect();
 
-    const left = tabRect.left - containerRect.left;
-    const width = tabRect.width;
+        const left = tabRect.left - containerRect.left;
+        const width = tabRect.width;
 
-    indicator.style.width = width + 'px';
-    indicator.style.transform = `translateX(${left}px)`;
+        indicator.style.width = width + 'px';
+        indicator.style.transform = `translateX(${left}px)`;
+    }
+
+    // Animate indicator for mobile tabs
+    if (clickedTab.classList.contains('mobile-tab-btn')) {
+        const mobileIndicator = document.getElementById('mobileTabIndicator');
+        const tabRect = clickedTab.getBoundingClientRect();
+        const tabsContainer = document.getElementById('mobileTabs');
+        const containerRect = tabsContainer.getBoundingClientRect();
+
+        const left = tabRect.left - containerRect.left;
+        const width = tabRect.width;
+
+        mobileIndicator.style.width = width + 'px';
+        mobileIndicator.style.transform = `translateX(${left}px)`;
+    }
 
     // Switch tab content
     document.querySelectorAll('.tab-content').forEach(content => {
@@ -455,17 +501,20 @@ function displayData(data) {
     // Desktop Hero Claim Card
     displayHeroClaimCard(data);
 
-    // Mobile Compact Hero Card
+    // Mobile Value Card
     displayMobileHeroCard(data);
 
-    // Mobile Horizontal Timeline
+    // Mobile Milestones (vertical cards)
     displayMobileTimeline(data);
 
-    // Combined Vertical Timeline with Milestones (Desktop)
+    // Desktop Combined Vertical Timeline with Milestones
     displayCombinedTimeline(data);
 
-    // Part 2 Grid
+    // Desktop Part 2 Grid
     displayPart2Grid(data);
+
+    // Mobile Part 2 Card
+    displayMobilePart2(data);
 }
 
 // Display Hero Claim Card - Total Remaining and Allocated
@@ -510,55 +559,78 @@ function displayHeroClaimCard(data) {
     `;
 }
 
-// Display Mobile Compact Hero Card
+// Display Mobile Value Card - Buyer-focused summary
 function displayMobileHeroCard(data) {
     const mobileHeroCard = document.getElementById('mobileHeroCard');
     if (!mobileHeroCard) return;
+
+    const now = Math.floor(Date.now() / 1000);
 
     // Calculate total remaining (Part 1 + Part 2)
     const part2Remaining = data.part2.total.sub(data.part2.earned);
     const totalRemaining = data.part1.remainingShare.add(part2Remaining);
     const totalAllocated = data.allocationPerToken;
 
-    // Calculate progress percentage
-    const claimed = totalAllocated.sub(totalRemaining);
-    const progressPercent = totalAllocated.gt(0)
-        ? parseFloat(formatEther(totalRemaining)) / parseFloat(formatEther(totalAllocated)) * 100
-        : 0;
+    // Find current milestone and penalty
+    let currentMilestone = data.milestones[0];
+    let bestMilestone = data.milestones[data.milestones.length - 1];
+    for (let i = 0; i < data.milestones.length; i++) {
+        if (now >= data.milestones[i].timestamp) {
+            currentMilestone = data.milestones[i];
+        }
+        if (data.milestones[i].penalty.eq(0)) {
+            bestMilestone = data.milestones[i];
+            break;
+        }
+    }
 
-    // NFT image or placeholder
+    const currentPenaltyPercent = parseFloat(formatEther(currentMilestone.penalty)) * 100;
+    const bestDate = formatDate(bestMilestone.timestamp);
+
+    // Penalty status
+    let penaltyClass = 'high';
+    let penaltyHint = 'Wait for better rate';
+    if (currentPenaltyPercent === 0) {
+        penaltyClass = 'good';
+        penaltyHint = 'Best time to claim!';
+    } else if (currentPenaltyPercent < 20) {
+        penaltyClass = 'good';
+        penaltyHint = `${bestDate} = 0%`;
+    } else if (currentPenaltyPercent < 35) {
+        penaltyClass = 'medium';
+        penaltyHint = `${bestDate} = 0%`;
+    }
+
+    // Node status
+    const nodeStatusClass = data.part2.isRunning ? 'running' : 'stopped';
+    const nodeStatusIcon = data.part2.isRunning ? '🟢' : '🔴';
+    const nodeStatusText = data.part2.isRunning ? 'Running' : 'Stopped';
+
+    // NFT image
     const imageHTML = data.nftMetadata && data.nftMetadata.image
         ? `<img src="${data.nftMetadata.image}" class="mobile-nft-thumb" alt="${data.nftMetadata.name}" />`
         : `<div class="mobile-nft-placeholder-thumb">🎯</div>`;
 
     mobileHeroCard.innerHTML = `
-        <div class="mobile-hero-top">
-            ${imageHTML}
-            <div class="mobile-hero-info">
-                <div class="mobile-nft-title">${data.nftMetadata ? data.nftMetadata.name : 'AI Alignment Node #' + data.nftId}</div>
-                <div class="mobile-stats-row">
-                    <div class="mobile-stat">
-                        <div class="mobile-stat-label">Remaining</div>
-                        <div class="mobile-stat-value">${formatNumber(formatEther(totalRemaining))} 0G</div>
-                    </div>
-                    <div class="mobile-stat">
-                        <div class="mobile-stat-label">Allocated</div>
-                        <div class="mobile-stat-value secondary">${formatNumber(formatEther(totalAllocated))} 0G</div>
-                    </div>
+        <div class="mobile-value-card">
+            <div class="mobile-value-header">
+                ${imageHTML}
+                <div class="mobile-nft-info">
+                    <div class="mobile-nft-title">${data.nftMetadata ? data.nftMetadata.name : 'Node #' + data.nftId}</div>
+                    <div class="mobile-node-status ${nodeStatusClass}">${nodeStatusIcon} ${nodeStatusText}</div>
                 </div>
             </div>
-        </div>
-        <div class="mobile-progress-bar">
-            <div class="mobile-progress-fill" style="width: ${progressPercent}%"></div>
-        </div>
-        <div class="mobile-hero-actions">
+
+            <div class="mobile-total-value">
+                <div class="mobile-total-label">💰 Total Remaining</div>
+                <div class="mobile-total-amount">${formatNumber(formatEther(totalRemaining))} 0G</div>
+                <div class="mobile-total-allocated">of ${formatNumber(formatEther(totalAllocated))} 0G allocated</div>
+            </div>
+
             <a href="https://opensea.io/assets/arbitrum/${CONFIG.NFT_CONTRACT_ADDRESS}/${data.nftId}"
-               target="_blank" class="mobile-action-btn secondary">
-                OpenSea ↗
+               target="_blank" class="mobile-opensea-link">
+                View on OpenSea ↗
             </a>
-            <button class="mobile-action-btn primary">
-                Claim →
-            </button>
         </div>
     `;
 }
@@ -685,112 +757,190 @@ function getPenaltyColorClass(penaltyPercent) {
 }
 
 // Display Mobile Horizontal Timeline
+// Display Mobile Milestones - Vertical cards showing all milestones
 function displayMobileTimeline(data) {
     const mobileTimelineSection = document.getElementById('mobileTimelineSection');
     if (!mobileTimelineSection) return;
 
     const now = Math.floor(Date.now() / 1000);
 
-    // Find current milestone index
-    let currentIndex = 0;
-    for (let i = 0; i < data.milestones.length; i++) {
-        if (now >= data.milestones[i].timestamp) {
-            currentIndex = i;
-        }
-    }
+    let milestonesHTML = '';
 
-    // Build timeline nodes
-    let nodesHTML = '';
     data.milestones.forEach((milestone, index) => {
         const nextMilestone = data.milestones[index + 1];
         const isPast = nextMilestone && now >= nextMilestone.timestamp;
         const isCurrent = now >= milestone.timestamp && (!nextMilestone || now < nextMilestone.timestamp);
         const isBest = milestone.penalty.eq(0);
 
-        let nodeClass = 'mobile-timeline-node';
-        if (isPast) nodeClass += ' past';
-        if (isCurrent) nodeClass += ' current';
-        if (isBest) nodeClass += ' best';
+        const penaltyPercent = parseFloat(formatEther(milestone.penalty)) * 100;
+        const penaltyColorClass = getPenaltyColorClass(penaltyPercent);
 
-        const shortDate = formatDate(milestone.timestamp).replace(', ', '\n');
+        // Calculate claimable amount with penalty
+        const receiveAmount = calculatePenaltyAdjustedAmount(
+            data.part1.remainingShare,
+            milestone.penalty,
+            data.part1.consumed,
+            data.part1.penaltyFree
+        );
 
-        nodesHTML += `
-            <div class="${nodeClass}" onclick="selectMobileMilestone(${index})">
-                ${index < data.milestones.length - 1 ? '<div class="mobile-timeline-connector"></div>' : ''}
-                <div class="mobile-timeline-node-dot"></div>
-                <div class="mobile-timeline-node-date">${shortDate}</div>
+        // Determine card class
+        let cardClass = 'mobile-milestone-card';
+        if (isPast) cardClass += ' past';
+        if (isCurrent) cardClass += ' current';
+        if (isBest) cardClass += ' best';
+
+        // Badge
+        let badgeHTML = '';
+        let badgeClass = '';
+        if (isBest) {
+            badgeHTML = '✨ BEST';
+            badgeClass = 'best';
+        } else if (isCurrent) {
+            badgeHTML = '📍 NOW';
+            badgeClass = 'current';
+        } else if (isPast) {
+            badgeHTML = '✅ PAST';
+            badgeClass = 'past';
+        } else {
+            badgeHTML = '🔒 FUTURE';
+            badgeClass = 'upcoming';
+        }
+
+        // Days until/since
+        const diffDays = Math.floor((milestone.timestamp - now) / (24 * 60 * 60));
+        let daysText = '';
+        if (isCurrent) {
+            daysText = 'Available now';
+        } else if (diffDays > 0) {
+            daysText = `in ${diffDays} days`;
+        } else if (!isPast) {
+            daysText = 'upcoming';
+        }
+
+        // Penalty box styling
+        let penaltyBoxClass = '';
+        if (penaltyPercent === 0) {
+            penaltyBoxClass = 'zero';
+        } else if (penaltyPercent >= 35) {
+            penaltyBoxClass = 'high';
+        }
+
+        milestonesHTML += `
+            <div class="${cardClass}">
+                <div class="mobile-milestone-header">
+                    <div class="mobile-milestone-date-section">
+                        <div class="mobile-milestone-date">${formatDate(milestone.timestamp)}</div>
+                        ${daysText ? `<div class="mobile-milestone-days">${daysText}</div>` : ''}
+                    </div>
+                    <div class="mobile-milestone-badge ${badgeClass}">${badgeHTML}</div>
+                </div>
+                <div class="mobile-milestone-stats">
+                    <div class="mobile-milestone-stat">
+                        <div class="mobile-milestone-stat-label">Claimable</div>
+                        <div class="mobile-milestone-stat-value">${formatNumber(formatEther(receiveAmount))} 0G</div>
+                    </div>
+                    <div class="mobile-milestone-penalty-box ${penaltyBoxClass}">
+                        <div class="mobile-milestone-stat-label">Penalty</div>
+                        <div class="mobile-milestone-stat-value ${penaltyColorClass}">${penaltyPercent.toFixed(0)}%</div>
+                    </div>
+                </div>
             </div>
         `;
     });
 
-    // Build detail card for current/best milestone
-    const detailIndex = currentIndex;
-    const detailMilestone = data.milestones[detailIndex];
-    const detailPenaltyPercent = (parseFloat(formatEther(detailMilestone.penalty)) * 100);
-    const detailIsCurrent = detailIndex === currentIndex;
-    const detailIsBest = detailMilestone.penalty.eq(0);
+    mobileTimelineSection.innerHTML = `
+        <div class="mobile-milestones-wrapper">
+            ${milestonesHTML}
+        </div>
+    `;
+}
 
-    const receiveAmount = calculatePenaltyAdjustedAmount(
-        data.part1.remainingShare,
-        detailMilestone.penalty,
-        data.part1.consumed,
-        data.part1.penaltyFree
-    );
+// Display Mobile Part 2 Card - Compact vesting overview
+function displayMobilePart2(data) {
+    const mobilePart2Card = document.getElementById('mobilePart2Card');
+    if (!mobilePart2Card) return;
 
-    const penaltyLoss = data.part1.remainingShare.sub(receiveAmount);
+    // Calculate Part 2 remaining
+    const part2Remaining = data.part2.total.sub(data.part2.earned);
 
-    let badgeHTML = '';
-    let badgeClass = '';
-    if (detailIsBest) {
-        badgeHTML = '✨ ZERO PENALTY!';
-        badgeClass = 'best';
-    } else if (detailIsCurrent) {
-        badgeHTML = '📍 CURRENT';
-        badgeClass = 'current';
-    } else {
-        badgeHTML = '🔒 UPCOMING';
-        badgeClass = 'upcoming';
+    // Calculate progress percentage
+    const progressPercent = data.part2.total.gt(0)
+        ? parseFloat(formatEther(data.part2.earned)) / parseFloat(formatEther(data.part2.total)) * 100
+        : 0;
+
+    // Node status
+    const statusClass = data.part2.isRunning ? 'running' : 'stopped';
+    const statusIcon = data.part2.isRunning ? '🟢' : '🔴';
+    const statusText = data.part2.isRunning ? 'Running' : 'Not Running';
+
+    // Last updated
+    let lastUpdatedHTML = 'N/A';
+    if (data.part2.lastUpdated) {
+        const lastUpdateDate = new Date(data.part2.lastUpdated * 1000);
+        const now = new Date();
+        const diffDays = Math.floor((now - lastUpdateDate) / (1000 * 60 * 60 * 24));
+
+        if (diffDays === 0) {
+            lastUpdatedHTML = 'Today';
+        } else if (diffDays === 1) {
+            lastUpdatedHTML = 'Yesterday';
+        } else if (diffDays < 7) {
+            lastUpdatedHTML = `${diffDays} days ago`;
+        } else {
+            lastUpdatedHTML = formatDate(data.part2.lastUpdated);
+        }
     }
 
-    const penaltyColorClass = getPenaltyColorClass(detailPenaltyPercent);
-
+    // Warning if node not running
     let warningHTML = '';
-    if (detailPenaltyPercent > 0) {
+    if (!data.part2.isRunning) {
         warningHTML = `
-            <div class="mobile-milestone-warning">
-                ⚠️ Claiming now loses <strong>${formatNumber(formatEther(penaltyLoss))} 0G</strong> to early withdrawal penalty
+            <div class="mobile-part2-warning">
+                <div class="mobile-part2-warning-icon">⚠️</div>
+                <div>Node is not running. Rewards are not being earned. Activate your node to continue earning Part 2 vesting rewards.</div>
             </div>
         `;
     }
 
-    mobileTimelineSection.innerHTML = `
-        <div class="mobile-timeline-title">📅 Vesting Milestones</div>
-        <div class="mobile-timeline-scroll">
-            <div class="mobile-timeline-track">
-                ${nodesHTML}
+    mobilePart2Card.innerHTML = `
+        <div class="mobile-part2-card">
+            <div class="mobile-part2-header">
+                <div class="mobile-part2-title">🚀 Part 2: Vesting</div>
+                <div class="mobile-part2-status ${statusClass}">${statusIcon} ${statusText}</div>
             </div>
-        </div>
-        <div class="mobile-milestone-detail" id="mobileMilestoneDetail">
-            <div class="mobile-milestone-header">
-                <div class="mobile-milestone-date">${formatDate(detailMilestone.timestamp)}</div>
-                <div class="mobile-milestone-badge ${badgeClass}">${badgeHTML}</div>
+
+            <div class="mobile-part2-main">
+                <div class="mobile-part2-label">💰 Remaining to Earn</div>
+                <div class="mobile-part2-amount">${formatNumber(formatEther(part2Remaining))} 0G</div>
             </div>
-            <div class="mobile-milestone-stats">
-                <div class="mobile-milestone-stat">
-                    <div class="mobile-milestone-stat-label">Claimable</div>
-                    <div class="mobile-milestone-stat-value">${formatNumber(formatEther(receiveAmount))} 0G</div>
+
+            <div class="mobile-part2-progress">
+                <div class="mobile-part2-progress-header">
+                    <span class="mobile-part2-progress-label">Progress</span>
+                    <span class="mobile-part2-progress-value">${progressPercent.toFixed(1)}%</span>
                 </div>
-                <div class="mobile-milestone-stat">
-                    <div class="mobile-milestone-stat-label">Penalty</div>
-                    <div class="mobile-milestone-stat-value ${penaltyColorClass}">${detailPenaltyPercent.toFixed(0)}%</div>
+                <div class="mobile-part2-progress-bar">
+                    <div class="mobile-part2-progress-fill" style="width: ${progressPercent}%"></div>
                 </div>
             </div>
+
+            <div class="mobile-part2-stats">
+                <div class="mobile-part2-stat">
+                    <div class="mobile-part2-stat-label">Earned</div>
+                    <div class="mobile-part2-stat-value">${formatNumber(formatEther(data.part2.earned))} 0G</div>
+                </div>
+                <div class="mobile-part2-stat">
+                    <div class="mobile-part2-stat-label">Total</div>
+                    <div class="mobile-part2-stat-value">${formatNumber(formatEther(data.part2.total))} 0G</div>
+                </div>
+            </div>
+
             ${warningHTML}
         </div>
     `;
 }
 
-// Select milestone on mobile timeline
+// Old function - no longer needed with vertical cards
 function selectMobileMilestone(index) {
     if (!currentNFTData) return;
 
@@ -967,4 +1117,3 @@ window.addEventListener('load', async () => {
 
 // Make functions available globally
 window.switchTab = switchTab;
-window.selectMobileMilestone = selectMobileMilestone;
