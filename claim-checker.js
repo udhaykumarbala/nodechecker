@@ -1,10 +1,9 @@
 // Configuration
 const CONFIG = {
     RPC_URL: 'https://evmrpc.0g.ai', // 0G Mainnet RPC
-    ARBITRUM_RPC_URL: 'https://arb1.arbitrum.io/rpc', // Arbitrum RPC
     GRAPHQL_URL: 'https://alignment-node-subgraph.0g.ai/subgraphs/name/alignment-node', // GraphQL API
     CLAIM_CONTRACT_ADDRESS: '0x6a9c6b5507e322aa00eb9c45e80c07ab63acabb6', // MilestoneClaim on 0G
-    NFT_CONTRACT_ADDRESS: '0xd0f4e1265edd221b5bb0e8667a59f31b587b2197', // NFT on Arbitrum
+    NFT_CONTRACT_ADDRESS: '0x18e56e7b120c7CBD06117A36E94E61a932A5A302', // NFT on 0G
     CONTRACT_ABI: [
         {
             name: "allocationPerToken",
@@ -80,7 +79,6 @@ const NFT_ABI = [
 // Global variables
 let provider;
 let contract;
-let arbitrumProvider;
 let nftContract;
 let currentNFTData = null; // Store current NFT data for mobile timeline interaction
 
@@ -89,12 +87,10 @@ async function init() {
     try {
         provider = new ethers.providers.JsonRpcProvider(CONFIG.RPC_URL);
         contract = new ethers.Contract(CONFIG.CLAIM_CONTRACT_ADDRESS, CONFIG.CONTRACT_ABI, provider);
-
-        arbitrumProvider = new ethers.providers.JsonRpcProvider(CONFIG.ARBITRUM_RPC_URL);
-        nftContract = new ethers.Contract(CONFIG.NFT_CONTRACT_ADDRESS, NFT_ABI, arbitrumProvider);
+        nftContract = new ethers.Contract(CONFIG.NFT_CONTRACT_ADDRESS, NFT_ABI, provider);
 
         console.log('Provider and contract initialized successfully');
-        console.log('Connected to 0G Mainnet & Arbitrum');
+        console.log('Connected to 0G Mainnet');
     } catch (error) {
         console.error('Initialization error:', error);
         throw error;
@@ -106,9 +102,8 @@ async function getNFTGraphQLData(tokenId) {
     try {
         const query = `
             query {
-                nfts(where: {tokenId: "${tokenId}"}) {
+                nft(id: "${tokenId}") {
                     id
-                    tokenId
                     delegatedTime
                     approvedTime
                     undelegatedTime
@@ -126,8 +121,8 @@ async function getNFTGraphQLData(tokenId) {
 
         const result = await response.json();
 
-        if (result.data && result.data.nfts && result.data.nfts.length > 0) {
-            const nftData = result.data.nfts[0];
+        if (result.data && result.data.nft) {
+            const nftData = result.data.nft;
 
             // Determine if node is running
             const delegatedTime = nftData.delegatedTime ? parseInt(nftData.delegatedTime) : 0;
@@ -542,8 +537,8 @@ function displayHeroClaimCard(data) {
                 <div class="nft-details">
                     <div class="nft-header">
                         <div class="nft-title">${data.nftMetadata ? data.nftMetadata.name : 'AI Alignment Node #' + data.nftId}</div>
-                        <a href="https://opensea.io/assets/arbitrum/${CONFIG.NFT_CONTRACT_ADDRESS}/${data.nftId}"
-                           target="_blank" class="opensea-link">OpenSea →</a>
+                        <a href="https://chainscan.0g.ai/token/${CONFIG.NFT_CONTRACT_ADDRESS}/instance/${data.nftId}"
+                           target="_blank" class="opensea-link">View on Explorer →</a>
                     </div>
                     <div class="allocation-section">
                         <div class="allocation-label">💰 Total Remaining / Total Allocated</div>
@@ -627,9 +622,9 @@ function displayMobileHeroCard(data) {
                 <div class="mobile-total-allocated">of ${formatNumber(formatEther(totalAllocated))} 0G allocated</div>
             </div>
 
-            <a href="https://opensea.io/assets/arbitrum/${CONFIG.NFT_CONTRACT_ADDRESS}/${data.nftId}"
+            <a href="https://chainscan.0g.ai/token/${CONFIG.NFT_CONTRACT_ADDRESS}/instance/${data.nftId}"
                target="_blank" class="mobile-opensea-link">
-                View on OpenSea ↗
+                View on Explorer ↗
             </a>
         </div>
     `;
