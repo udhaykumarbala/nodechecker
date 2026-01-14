@@ -537,7 +537,7 @@ function displayHeroClaimCard(data) {
                 <div class="nft-details">
                     <div class="nft-header">
                         <div class="nft-title">${data.nftMetadata ? data.nftMetadata.name : 'AI Alignment Node #' + data.nftId}</div>
-                        <a href="https://chainscan.0g.ai/token/${CONFIG.NFT_CONTRACT_ADDRESS}/instance/${data.nftId}"
+                        <a href="https://chainscan.0g.ai/nft/${CONFIG.NFT_CONTRACT_ADDRESS}/${data.nftId}"
                            target="_blank" class="opensea-link">View on Explorer →</a>
                     </div>
                     <div class="allocation-section">
@@ -622,7 +622,7 @@ function displayMobileHeroCard(data) {
                 <div class="mobile-total-allocated">of ${formatNumber(formatEther(totalAllocated))} 0G allocated</div>
             </div>
 
-            <a href="https://chainscan.0g.ai/token/${CONFIG.NFT_CONTRACT_ADDRESS}/instance/${data.nftId}"
+            <a href="https://chainscan.0g.ai/nft/${CONFIG.NFT_CONTRACT_ADDRESS}/${data.nftId}"
                target="_blank" class="mobile-opensea-link">
                 View on Explorer ↗
             </a>
