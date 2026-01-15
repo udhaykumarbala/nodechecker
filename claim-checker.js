@@ -1083,6 +1083,20 @@ function displayPart2Grid(data) {
     `;
 }
 
+// Get NFT ID from URL path (e.g., /100 or /nft/100)
+function getNFTIdFromURL() {
+    const path = window.location.pathname;
+    // Match patterns like /100 or /nft/100
+    const match = path.match(/\/(\d+)$/);
+    return match ? match[1] : null;
+}
+
+// Update URL with NFT ID
+function updateURL(nftId) {
+    const newURL = `/${nftId}`;
+    window.history.pushState({ nftId }, '', newURL);
+}
+
 // Handle form submission
 document.getElementById('searchForm').addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -1093,7 +1107,19 @@ document.getElementById('searchForm').addEventListener('submit', async (e) => {
         return;
     }
 
+    // Update URL for sharing
+    updateURL(nftId);
+
     await getNFTClaimData(nftId);
+});
+
+// Handle browser back/forward navigation
+window.addEventListener('popstate', async (e) => {
+    const nftId = getNFTIdFromURL();
+    if (nftId) {
+        document.getElementById('nftIdInput').value = nftId;
+        await getNFTClaimData(nftId);
+    }
 });
 
 // Initialize on page load
@@ -1104,6 +1130,13 @@ window.addEventListener('load', async () => {
         }
         await init();
         console.log('Application initialized successfully');
+
+        // Check if NFT ID is in URL and auto-load
+        const nftIdFromURL = getNFTIdFromURL();
+        if (nftIdFromURL) {
+            document.getElementById('nftIdInput').value = nftIdFromURL;
+            await getNFTClaimData(nftIdFromURL);
+        }
     } catch (error) {
         console.error('Failed to initialize application:', error);
         showError('Failed to initialize application. Please refresh the page.');
