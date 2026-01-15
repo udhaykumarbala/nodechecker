@@ -1085,6 +1085,18 @@ function displayPart2Grid(data) {
 
 // Get NFT ID from URL path (e.g., /100 or /nft/100)
 function getNFTIdFromURL() {
+    // Check for redirect from 404.html (GitHub Pages SPA support)
+    const redirect = sessionStorage.getItem('redirect');
+    if (redirect) {
+        sessionStorage.removeItem('redirect');
+        const match = redirect.match(/\/(\d+)/);
+        if (match) {
+            // Update URL to show the correct path
+            window.history.replaceState({ nftId: match[1] }, '', redirect);
+            return match[1];
+        }
+    }
+
     const path = window.location.pathname;
     // Match patterns like /100 or /nft/100
     const match = path.match(/\/(\d+)$/);
